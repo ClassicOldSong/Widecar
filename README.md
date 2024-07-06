@@ -30,6 +30,8 @@ To use Widecar, simply configure it to run upon connection and exit in your desi
 
 ![Configuration Screenshot](https://github.com/ClassicOldSong/Widecar/assets/10512422/20331aa5-9372-43f3-b79c-4e84a61e843d)
 
+You can find a pre-built version in the [release page](https://github.com/ClassicOldSong/Widecar/releases).
+
 ## License
 
 This project is licensed under the MIT License.
