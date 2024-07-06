@@ -2,7 +2,7 @@
 
 Widecar is a tiny helper designed to enhance your streaming experience with Sunshine by automatically managing virtual screens. This app seamlessly integrates with ParsecVDD to create and destroy virtual screens based on your connection status, and it ensures your virtual display matches the Moonlight device resolution settings.
 
-`Widecar` is basically `Sidecar for Windows`
+`Widecar` is basically `Sidecar for Windows`, it is especially useful when you have an Android tablet with high refresh rate and a stylus. If you connect a keyboard and mouse to the tablet, it's no different from a Windows tablet but with much powerful CPU/GPU power when streaming.
 
 ## Features
 
