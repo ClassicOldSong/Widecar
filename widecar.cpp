@@ -140,26 +140,66 @@ int extract_integer_from_device_key(const std::string& device_key) {
 	return -1; // Invalid integer
 }
 
-DISPLAY_DEVICEA query_displays(int target_device_key_int, const std::string& target_device_id) {
+DEVMODEA get_device_settings(const DISPLAY_DEVICEA& display_device) {
+	DEVMODEA dev_mode = {0};
+	dev_mode.dmSize = sizeof(dev_mode);
+
+	int sleep_interval = 20;
+	LONG result;
+
+	while (sleep_interval < 1000) {
+		result = EnumDisplaySettingsA(display_device.DeviceName, ENUM_CURRENT_SETTINGS, &dev_mode);
+		if (!result) {
+			printf("Error getting dev mode for %s: %d, retrying in %dms...\n", display_device.DeviceName, result, sleep_interval);
+			Sleep(sleep_interval);
+			sleep_interval *= 2;
+		} else {
+			return dev_mode;
+		}
+	}
+	printf("Could not get dev mode for %s: %d, exiting...\n", display_device.DeviceName, result);
+	exit(0);
+	return dev_mode;
+}
+
+int query_displays(const std::string& target_device_id, std::vector<std::pair<DISPLAY_DEVICEA, DEVMODEA>>& active_displays) {
 	DISPLAY_DEVICEA display_device;
+	display_device.cb = sizeof(DISPLAY_DEVICEA);
+	int device_index = 0;
+	int match_count = 0;
+
+	while (EnumDisplayDevicesA(NULL, device_index, &display_device, 0)) {
+		std::string device_key(display_device.DeviceKey);
+		std::string device_id(display_device.DeviceID);
+
+		if (
+			(display_device.StateFlags & DISPLAY_DEVICE_ACTIVE)
+			&& device_id.find(target_device_id) != std::string::npos
+		) {
+			active_displays.emplace_back(display_device, get_device_settings(display_device));
+			match_count++;
+		}
+		device_index++;
+	}
+
+	return match_count;
+}
+
+DISPLAY_DEVICEA find_display(int target_device_key_int, const std::string& target_device_id) {
+	DISPLAY_DEVICEA display_device = {0};
 	display_device.cb = sizeof(DISPLAY_DEVICEA);
 	int device_index = 0;
 
 	while (EnumDisplayDevicesA(NULL, device_index, &display_device, 0)) {
+		device_index++;
+
 		std::string device_key(display_device.DeviceKey);
 		std::string device_id(display_device.DeviceID);
 		int device_key_int = extract_integer_from_device_key(device_key);
 
 		if (device_key_int == target_device_key_int && device_id.find(target_device_id) != std::string::npos) {
-			printf("Matching device found!\n");
-			printf("Device Index: %d\n", device_index);
-			printf("Device Name: %s\n", display_device.DeviceName);
-			printf("Device String: %s\n", display_device.DeviceString);
-			printf("Device ID: %s\n", display_device.DeviceID);
-			printf("Device Key: %s\n", display_device.DeviceKey);
 			return display_device;
 		}
-		device_index++;
 	}
 
 	printf("No matching device found.\n");
@@ -167,9 +207,8 @@ DISPLAY_DEVICEA query_displays(int target_device_key_int, const std::string& tar
 	return display_device;
 }
 
-bool change_display_settings(const DISPLAY_DEVICEA& display_device, int width, int height, int refresh_rate) {
-	DEVMODEA dev_mode;
-	memset(&dev_mode, 0, sizeof(dev_mode));
+bool change_display_settings(DISPLAY_DEVICEA& display_device, int width, int height, int refresh_rate) {
+	DEVMODEA dev_mode = {0};
 	dev_mode.dmSize = sizeof(dev_mode);
 
 	if (EnumDisplaySettingsA(display_device.DeviceName, ENUM_CURRENT_SETTINGS, &dev_mode)) {
@@ -182,23 +221,16 @@ bool change_display_settings(const DISPLAY_DEVICEA& display_device, int width, i
 		if (result == DISP_CHANGE_SUCCESSFUL) {
 			return true;
 		} else {
-			printf("Failed to change display settings: %ld\n", result);
+			printf("Failed to change display settings for %s: %ld\n", display_device.DeviceName, result);
 		}
 	} else {
-		printf("Failed to enumerate display settings.\n");
+		printf("Failed to enumerate display settings for %s.\n", display_device.DeviceName);
 	}
 	return false;
 }
 
-bool set_primary_display(const DISPLAY_DEVICEA& primary_device) {
-	DEVMODEA primary_dev_mode;
-	memset(&primary_dev_mode, 0, sizeof(primary_dev_mode));
-	primary_dev_mode.dmSize = sizeof(primary_dev_mode);
-
-	if (!EnumDisplaySettingsA(primary_device.DeviceName, ENUM_CURRENT_SETTINGS, &primary_dev_mode)) {
-		printf("Failed to enumerate display settings for primary device.\n");
-		return false;
-	}
+bool set_primary_display(DISPLAY_DEVICEA& primary_device) {
+	DEVMODEA primary_dev_mode = get_device_settings(primary_device);
 
 	int offset_x = primary_dev_mode.dmPosition.x;
 	int offset_y = primary_dev_mode.dmPosition.y;
@@ -212,28 +244,28 @@ bool set_primary_display(const DISPLAY_DEVICEA& primary_device) {
 	int device_index = 0;
 
 	while (EnumDisplayDevicesA(NULL, device_index, &display_device, 0)) {
+		device_index++;
 		if (!(display_device.StateFlags & DISPLAY_DEVICE_ACTIVE)) {
-			device_index++;
 			continue;
 		}
 
-		DEVMODEA dev_mode;
-		memset(&dev_mode, 0, sizeof(dev_mode));
-		dev_mode.dmSize = sizeof(dev_mode);
+		DEVMODEA dev_mode = get_device_settings(display_device);
 
-		if (EnumDisplaySettingsA(display_device.DeviceName, ENUM_CURRENT_SETTINGS, &dev_mode)) {
-			dev_mode.dmPosition.x -= offset_x;
-			dev_mode.dmPosition.y -= offset_y;
-			dev_mode.dmFields = DM_POSITION;
+		dev_mode.dmPosition.x -= offset_x;
+		dev_mode.dmPosition.y -= offset_y;
+		dev_mode.dmFields = DM_POSITION;
 
-			result = ChangeDisplaySettingsExA(display_device.DeviceName, &dev_mode, NULL, CDS_UPDATEREGISTRY | CDS_NORESET, NULL);
-			if (result != DISP_CHANGE_SUCCESSFUL) {
-				printf("Failed to adjust display settings for device: %ld\n", result);
-			}
+		result = ChangeDisplaySettingsExA(display_device.DeviceName, &dev_mode, NULL, CDS_UPDATEREGISTRY | CDS_NORESET, NULL);
+		if (result != DISP_CHANGE_SUCCESSFUL) {
+			printf("Failed to adjust display settings for device %s: %ld\n", display_device.DeviceName, result);
 		}
-
-		device_index++;
 	}
+
+	// Update primary device's config to ensure it's primary
+	primary_dev_mode.dmPosition.x = 0;
+	primary_dev_mode.dmPosition.y = 0;
+	primary_dev_mode.dmFields = DM_POSITION;
+	ChangeDisplaySettingsExA(primary_device.DeviceName, &primary_dev_mode, NULL, CDS_UPDATEREGISTRY | CDS_NORESET | CDS_SET_PRIMARY, NULL);
 
 	result = ChangeDisplaySettingsExA(NULL, NULL, NULL, 0, NULL);
 	if (result != DISP_CHANGE_SUCCESSFUL) {
@@ -244,7 +276,13 @@ bool set_primary_display(const DISPLAY_DEVICEA& primary_device) {
 	return true;
 }
 
-int main() {
+int WINAPI WinMain(
+	HINSTANCE   hInstance,
+	HINSTANCE   hPrevInstance,
+	LPSTR       lpCmdLine,
+	int         nCmdShow
+) {
+// int main() {
 	DeviceStatus status = QueryDeviceStatus(&VDD_CLASS_GUID, VDD_HARDWARE_ID);
 	if (status != DEVICE_OK) {
 		printf("Parsec VDD device is not OK, got status %d.\n", status);
@@ -269,6 +307,14 @@ int main() {
 
 	printf("ParentID: %d\n", parent_id);
 
+	std::string target_device_id = "Root\\Parsec\\VDA";
+
+	// Collect DEVMODE from all currently active displays
+	std::vector<std::pair<DISPLAY_DEVICEA, DEVMODEA>> active_displays;
+	query_displays(target_device_id, active_displays);
+
+	printf("Active vdisplay count: %zd\n", active_displays.size());
+
 	DWORD display_id;
 	std::string registry_path = get_registry_path(parent_id, s_app_id);
 	LPCSTR reg_path = registry_path.c_str();
@@ -276,27 +322,54 @@ int main() {
 	if (check_registry_entry_exists(HKEY_LOCAL_MACHINE, reg_path, "displayId", &display_id)) {
 		remove_registry(HKEY_LOCAL_MACHINE, reg_path);
 		VddRemoveDisplay(vdd, display_id);
-		printf("Removed display for APP: %s\n", s_app_id.c_str());
+
+		// Apply all saved display settings
+		for (auto& display_pair : active_displays) {
+			auto& display = display_pair.first;
+			auto& dev_mode = display_pair.second;
+			int device_key_int = extract_integer_from_device_key(display.DeviceKey);
+			if (device_key_int != display_id) {
+				printf("Resetting for %s, w: %d, h: %d, fps: %d\n", display.DeviceName, dev_mode.dmPelsWidth, dev_mode.dmPelsHeight, dev_mode.dmDisplayFrequency);
+				change_display_settings(display, dev_mode.dmPelsWidth, dev_mode.dmPelsHeight, dev_mode.dmDisplayFrequency);
+			} else {
+				printf("Removed display %s for APP: %s\n", display.DeviceName, s_app_id.c_str());
+			}
+		}
 	} else {
 		write_custom_res_reg(4, sc_width, sc_height, sc_fps);
 
 		display_id = VddAddDisplay(vdd);
-
 		write_reg_dword(HKEY_LOCAL_MACHINE, reg_path, "displayId", display_id);
 
-		std::string target_device_id = "Root\\Parsec\\VDA";
+		// Get the corresponding DISPLAY_DEVICEA with display_id
+		DISPLAY_DEVICEA new_display = find_display(display_id, target_device_id);
 
-		DISPLAY_DEVICEA display_device = query_displays(display_id, target_device_id);
+		if (new_display.cb != 0) {
+			// Modify the devmode with sc_width, sc_height, and sc_fps
+			DEVMODEA new_dev_mode = get_device_settings(new_display);
+			new_dev_mode.dmPelsWidth = sc_width;
+			new_dev_mode.dmPelsHeight = sc_height;
+			new_dev_mode.dmDisplayFrequency = sc_fps;
 
-		if (display_device.cb != 0) {
-			if (change_display_settings(display_device, sc_width, sc_height, sc_fps)) {
-				printf("Resolution and refresh rate changed successfully.\n");
+			// Insert the new display and its devmode into the collected active displays
+			active_displays.emplace_back(new_display, new_dev_mode);
+
+			// Apply all saved display settings
+			for (auto& display_pair : active_displays) {
+				auto& dev_mode = display_pair.second;
+				printf("Resetting for %s, w: %d, h: %d, fps: %d\n", display_pair.first.DeviceName, dev_mode.dmPelsWidth, dev_mode.dmPelsHeight, dev_mode.dmDisplayFrequency);
+				change_display_settings(display_pair.first, dev_mode.dmPelsWidth, dev_mode.dmPelsHeight, dev_mode.dmDisplayFrequency);
 			}
 
-			if (set_primary_display(display_device)) {
+			if (set_primary_display(new_display)) {
 				printf("Primary display set successfully.\n");
 			}
+
+			printf("Added display %s for APP: %s\n", new_display.DeviceName, s_app_id.c_str());
+		} else {
+			printf("Display not found for id: %d!", display_id);
 		}
+
 	}
 
 	return 0;
