@@ -21,8 +21,9 @@ Widecar is a tiny helper designed to enhance your streaming experience with Suns
 ### ParsecVDD
 - [ParsecVDD](https://github.com/nomi-san/parsec-vdd)
   - The ParsecVDA driver must be installed.
-  - Install first, run it, then put it in the background. You don't need to do anything more.
-  - Other persistent services that poll the vidsplay server constantly, such as [ParsecVDA-Always-Connected](https://github.com/timminator/ParsecVDA-Always-Connected), are also compatible.
+  - Install first, **run it**, then put it in the background. You don't need to do anything more.
+  - Read [here](https://github.com/nomi-san/parsec-vdd#design-notes) for explaination of why a daemon is needed:
+    > You have to ping to the driver periodically to keep added displays alive, otherwise all of them will be unplugged after a second.
 
 ## Configuration
 
@@ -31,6 +32,37 @@ To use Widecar, simply configure it to run upon connection and exit in your desi
 ![Configuration Screenshot](https://github.com/ClassicOldSong/Widecar/assets/10512422/20331aa5-9372-43f3-b79c-4e84a61e843d)
 
 You can find a pre-built version in the [release page](https://github.com/ClassicOldSong/Widecar/releases).
+
+## Advanced usage
+
+You can copy the `sunshine.conf` in your Sunshine installation, name it like `sunshine_widecar.conf`, and start a second Sunshine instance with it by executing `sunshine.exe path\to\sunshine_widecar.conf` with Adminsitrator privilege.
+
+Add/change the following parts to `sunshine_widecar.conf` in order to run parallel with the original instance:
+
+```ini
+# Change the port according to your situation
+port = 48989
+# You can change the name as you wish
+sunshine_name = Widecar
+# A separate state file must be created in order to distinguish between the original Sunshine instance
+file_state = sunshine_state_widecar.json
+# Change to a different log path to prevent conflicts
+log_path = sunshine_widecar.log
+# Change the path to where you actually put the widecar.exe
+global_prep_cmd = [{"do":"D:\\Tools\\widecar.exe","undo":"D:\\Tools\\widecar.exe","elevated":"true"}]
+```
+
+Then you need to ensure `Global Prep Commands` is enabled for all of your apps. In this configuration, the `Widecar` instance share all apps from the main instance, but all apps started here are in a separated virtual screen.
+
+You can start even more Sunshine instances by doing the above steps multiple times, then you'll be able to connect multiple Moonlight clients at the same time for even more virtual mointors.
+
+## Troubleshooting
+
+- **No virtual display added**
+  - Ensure the ParsecVDA driver is installed
+  - Ensure the ParsecVDD application or similar services that constantly poll the driver is running
+- **Shows the same screen as main screen**
+  - If you're using an external display for the first time, Windows might configure it as "Mirror mode" by default. Press <kbd>Meta + P</kbd> (or known as <kbd>Win + P</kbd>) and select "Extended", then **exit the app** (not only the stream) and start the app again. You only need to do this once.
 
 ## License
 
