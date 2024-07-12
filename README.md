@@ -35,7 +35,11 @@ You can find a pre-built version in the [release page](https://github.com/Classi
 
 ## Advanced usage
 
-You can copy the `sunshine.conf` in your Sunshine installation, name it like `sunshine_widecar.conf`, and start a second Sunshine instance with it by executing `sunshine.exe path\to\sunshine_widecar.conf` with Adminsitrator privilege.
+You can copy the `sunshine.conf` in your Sunshine installation, name it like `sunshine_widecar.conf`, and start a second Sunshine instance with it by executing `sunshine.exe path\to\sunshine_widecar.conf` with SYSTEM privilege.
+
+The [start-widecar.ps1](start-widecar.ps1) should help you with that.
+
+You can then create a shortcut to that script, setting target to `powershell -ExecutionPolicy Bypass -File "path\to\start-widecar.ps1"`
 
 Add/change the following parts to `sunshine_widecar.conf` in order to run parallel with the original instance:
 
