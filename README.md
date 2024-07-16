@@ -41,6 +41,8 @@ The [start-widecar.ps1](start-widecar.ps1) should help you with that.
 
 You can then create a shortcut to that script, setting target to `powershell -ExecutionPolicy Bypass -File "path\to\start-widecar.ps1"`
 
+You need to execute the script with Administrator privilege. Starting the instance with only Administrator privilege is fine, but you won't be able to access UAC dialog or enter lock screen password through streaming.
+
 Add/change the following parts to `sunshine_widecar.conf` in order to run parallel with the original instance:
 
 ```ini
@@ -76,7 +78,7 @@ You can start even more Sunshine instances by doing the above steps multiple tim
     Add to the **`game command`** like this with the proper display name to your "Desktop" app:
 
     ![image](https://github.com/user-attachments/assets/3ed9a9ca-857a-4871-b235-43f802a8f60f)
-    
+
     You can obtain the display name by running the MultiMonitorTool directly from Explorer.
 
 ## License
