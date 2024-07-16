@@ -67,6 +67,17 @@ You can start even more Sunshine instances by doing the above steps multiple tim
   - Ensure the ParsecVDD application or similar services that constantly poll the driver is running
 - **Shows the same screen as main screen**
   - If you're using an external display for the first time, Windows might configure it as "Mirror mode" by default. Press <kbd>Meta + P</kbd> (or known as <kbd>Win + P</kbd>) and select "Extended", then **exit the app** (not only the stream) and start the app again. You only need to do this once.
+- **Primary display changed to the virtual display after connection. I don't want that.**
+  - Setting the virtual display to primary before the stream starts is a must for sunshine to use the virtual screen for streaming.
+    You can set the primary display back after the stream starts manually or using MultiMonitorTool to automate the process.
+
+    https://www.nirsoft.net/utils/multi_monitor_tool.html
+
+    Add to the **`game command`** like this with the proper display name to your "Desktop" app:
+
+    ![image](https://github.com/user-attachments/assets/3ed9a9ca-857a-4871-b235-43f802a8f60f)
+    
+    You can obtain the display name by running the MultiMonitorTool directly from Explorer.
 
 ## License
 
