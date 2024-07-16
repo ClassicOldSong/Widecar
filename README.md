@@ -12,6 +12,8 @@ Widecar is a tiny helper designed to enhance your streaming experience with Suns
 4. **Easy to use**: Simply execute the app upon connection and exit. See the screenshot below for configuration.
 5. **Multi-instances support**: Widecar supports multiple Sunshine instances running simultaneously for multiple sidecar screen configuration.
 
+Also checkout https://github.com/ClassicOldSong/moonlight-android/releases for a much improved Moonlight Android client with much better touch pad support and several other improvements, since the official one hasn't been updated for months...
+
 ## Requirements
 
 ### Sunshine Streaming
