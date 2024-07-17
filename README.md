@@ -82,6 +82,20 @@ You can start even more Sunshine instances by doing the above steps multiple tim
     ![image](https://github.com/user-attachments/assets/a29fca73-ca52-4651-9cdf-87dd6bf71da4)
 
     You can change the timeout accordingly. If changing the primary display back to the built-in display too quickly, Sunshine might still capture the built-in display.
+- **Resolution can't match client side anymore**
+  - ***NEVER*** set screen rotation on virtual displays! Widecar can handle vertical display normally, there's no need to manually set screen rotatition if you're using [Moonlight Noir](https://github.com/ClassicOldSong/moonlight-android) with Widecar.
+  - If you happen messed up with your monitor config:
+    1. Disconnect ALL Moonlight sessions
+    2. Remove ALL virtual displays using ParsecVDD, or simply quit ParsecVDD or whatever service you're using to keep the driver alive
+    3. <kbd>Meta(Win) + R</kbd>, then type `regedit`, hit enter
+    4. Delete ALL entries under
+        - `HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Configuration`
+        - `HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Connectivity`
+        - `HKEY_LOCAL_MACHINE\SOFTWARE\Widecar\sessions`
+
+    This will clear your monitor configuration cache and Widecar connection cache.
+
+    Then you're good to go!
 
 
 ## License
