@@ -9,11 +9,19 @@ param(
 $psexecPath = "`"D:\Tools\pstools\PsExec.exe`""
 
 # Build the command
-if ($exeParams) {
-    $command = "powershell -Command `"start '$exePath' '$exeParams' -WorkingDirectory '$workingDirectory' -WindowStyle Hidden`""
-} else {
-    $command = "powershell -Command `"start '$exePath' -WorkingDirectory '$workingDirectory' -WindowStyle Hidden`""
+$command = "powershell -Command `"start '$exePath' '$exeParams' -WorkingDirectory '$workingDirectory' -WindowStyle Hidden`""
+
+# Get the first non-zero session ID using query user
+$users = query user
+$sessionId = $null
+
+for ($i=1; $i -lt $users.Count; $i++) {
+    $temp = [string]($users[$i] | Select-String -Pattern "\s\d+\s").Matches.Value.Trim()
+    if ($temp -ne '0') {
+        $sessionId = $temp
+        break
+    }
 }
 
 # Execute the command
-Start-Process -FilePath $psexecPath -ArgumentList "-accepteula -i 1 -s $command" -WindowStyle Hidden
+Start-Process -FilePath $psexecPath -ArgumentList "-accepteula -i $sessionId -s $command" -WindowStyle Hidden
