@@ -96,6 +96,29 @@ You can start even more Sunshine instances by doing the above steps multiple tim
     This will clear your monitor configuration cache and Widecar connection cache.
 
     Then you're good to go!
+- **Stream failed to start with 2 or more graphics card**
+  - When your system has more than 2 graphic cards, ParsecVDA might got confused with which card to use as backend. 
+
+    Follow the `Select Parent GPU` section of [this instruction](https://support.parsec.app/hc/en-us/articles/4423615425293-VDD-Advanced-Configuration) to manually set your desired GPU to use with the virtual display.
+
+    > Visit the following Registry path on your system and add the specified key and value.
+    >
+    >```
+    >HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\WUDF\Services\ParsecVDA\Parameters
+    >```
+    >
+    >Insert new `DWORD` with name `PreferredRenderAdapterVendorId`, then depending on your system hardware enter the following Vendor ID as hexadecimal in the Registry key value field.
+    >
+    >| Vendor |  ID  |
+    >|--------|------|
+    >| NVIDIA | 10DE |
+    >| AMD    | 1002 |
+    >
+    >To apply this change to the Parsec Virtual Display Adapter, either reboot the host or disable and enable the Virtual Display Adapter inside device manager.
+
+    You might also want to set `DisablePreferredRenderAdapterChange` to `0` if it exists in the registry path. [[Source](https://github.com/ClassicOldSong/Widecar/issues/2#issuecomment-2254636625)]
+
+    If you have done the above steps and still got no image, try set `Adapter Name` in your Sunshine's `Audio/Video` config to the same video card's name of which you're using with the VDA driver.
 
 
 ## License
