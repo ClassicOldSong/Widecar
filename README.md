@@ -120,6 +120,20 @@ You can start even more Sunshine instances by doing the above steps multiple tim
 
     If you have done the above steps and still got no image, try set `Adapter Name` in your Sunshine's `Audio/Video` config to the same video card's name of which you're using with the VDA driver.
 
+## Disclaimer
+
+I got kicked from Moonlight and Sunshine's Discord server and banned from Sunshine's GitHub repo literally for helping people out.
+
+![image](https://github.com/user-attachments/assets/f01fc57f-5199-4495-9b96-68cfa017b7ff)
+
+This is what I got for finding a bug, opened an issue, getting no response, troubleshoot myself, fixed the issue myself, shared it by PR to the main repo hoping my efforts can help someone else during the maintainance gap.
+
+Yes, I'm going away. I have started [a fork of Sunshine called Apollo](https://github.com/ClassicOldSong/Apollo) and will add useful features that will never get merged by the main repo shortly. [Apollo](https://github.com/ClassicOldSong/Apollo) and [Moonlight Noir](https://github.com/ClassicOldSong/moonlight-android) will no longer be compatible with OG Sunshine and OG Moonlight eventually, but they'll work even better with much more carefully designed features.
+
+The Moonlight repo had stayed silent for 5 months, with nobody actually responding to issues, and people are getting totally no help besides the limited FAQ in their Discord server. I tried to answer issues and questions, solve problems within my ablilty but I got kicked out just for helping others. The funniest thing is, the repo starts updating after they got me banned!
+
+**PRs for feature improvements are welcomed here unlike the main repo, your ideas are more likely to be appreciated and your efforts are actually being respected. We welcome people who can and willing to share their efforts, helping yourselves and other people in need.**
+
 
 ## License
 
