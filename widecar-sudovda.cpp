@@ -6,7 +6,13 @@
 #include <combaseapi.h>
 #include <thread>
 #include "sudovda.h"
-#include "AdapterOption.h"
+// #include "AdapterOption.h"
+
+#pragma comment(lib, "user32.lib")
+#pragma comment(lib, "ole32.lib")
+
+// {dff7fd29-5b75-41d1-9731-b32a17a17104}
+static const GUID DEFAULT_DISPLAY_GUID = { 0xdff7fd29, 0x5b75, 0x41d1, { 0x97, 0x31, 0xb3, 0x2a, 0x17, 0xa1, 0x71, 0x04 } };
 
 using namespace SUDOVDA;
 
@@ -82,91 +88,144 @@ bool setPrimaryDisplay(const wchar_t* primaryDeviceName) {
 }
 
 int main() {
-	std::locale::global(std::locale(""));
+	std::setlocale(LC_ALL, "");
 
-	auto availableGpus = getAvailableGPUs();
+	auto s_client_uid = std::getenv("SUNSHINE_CLIENT_UID");
+	auto s_client_name = std::getenv("SUNSHINE_CLIENT_NAME");
+	auto s_client_width = std::getenv("SUNSHINE_CLIENT_WIDTH");
+	auto s_client_height = std::getenv("SUNSHINE_CLIENT_HEIGHT");
+	auto s_client_fps = std::getenv("SUNSHINE_CLIENT_FPS");
+	auto s_app_id = std::getenv("SUNSHINE_APP_ID");
+	auto s_app_name = std::getenv("SUNSHINE_APP_NAME");
 
-	for (auto it: availableGpus) {
-		std::cout << "GPU -----------------" << std::endl;
-		std::wcout << L"Name: " << it.name << std::endl;
-		std::cout << "VMEM: " << it.desc.DedicatedVideoMemory << std::endl;
-		std::cout << std::endl;
+	UINT width = 1920;
+	UINT height = 1080;
+	UINT fps = 60;
+
+	if (s_client_width && s_client_height && s_client_fps) {
+		auto sc_width = strtol(s_client_width, NULL, 10);
+		auto sc_height = strtol(s_client_height, NULL, 10);
+		auto sc_fps = strtol(s_client_fps, NULL, 10);
+
+		if (sc_width && sc_height && sc_fps) {
+			width = sc_width;
+			height = sc_height;
+			fps = sc_fps;
+		}
+	// } else {
+	// 	return 0;
 	}
 
-	auto options = AdapterOption();
+	if (!s_client_uid) {
+		printf("CLIENT UID NOT PROVIDED!\n");
+	} else {
+		printf("Client UID: %s\n", s_client_uid);
+	}
 
-	// LUID selectedGPU = options.selectGPU(L"Intel(R) UHD Graphics 630");
-	LUID selectedGPU = options.selectGPU(L"???");
+	if (!s_app_name || !strlen(s_app_name) || !strcmp(s_app_name, "unknown")) {
+		s_app_name = "SudoMakerVDD";
+	}
 
-	std::cout << "!!!!!!" << std::endl;
-	std::wcout << L"Selected GPU: " << options.target_name << std::endl;
+	if (!s_client_name || !strlen(s_client_name) || !strcmp(s_client_name, "unknown")) {
+		s_client_name = s_app_name;
+	}
 
 	HANDLE hDevice = OpenDevice(&SUVDA_INTERFACE_GUID);
 	if (hDevice == INVALID_HANDLE_VALUE) {
-		std::cerr << "Failed to open device." << std::endl;
+		printf("Failed to open device.\n");
 		return 1;
 	}
 
-	std::thread ping_thread([hDevice]{
-		for (;;) {
-			PingDriver(hDevice);
-			Sleep(1000);
-		}
-	});
-
-	ping_thread.detach();
-
-	VIRTUAL_DISPLAY_GET_PROTOCOL_VERSION_OUT protocolVersion;
-	if (GetProtocolVersion(hDevice, protocolVersion)) {
-		printf("Get version: %d.%d.%d\n", protocolVersion.Version.Major, protocolVersion.Version.Minor, protocolVersion.Version.Incremental);
-		printf("Local version: %d.%d.%d\n", VDAProtocolVersion.Major, VDAProtocolVersion.Minor, VDAProtocolVersion.Incremental);
-		printf("Version match: %d\n\n", isProtocolCompatible(protocolVersion.Version));
+	if (!CheckProtocolCompatible(hDevice)) {
+		printf("SUDOVDA protocol not compatible!\n");
+		return 1;
 	}
 
-	SetRenderAdapter(hDevice, selectedGPU);
+	// auto availableGpus = getAvailableGPUs();
+
+	// for (auto it: availableGpus) {
+	// 	std::cout << "GPU -----------------" << std::endl;
+	// 	std::wcout << L"Name: " << it.name << std::endl;
+	// 	std::cout << "VMEM: " << it.desc.DedicatedVideoMemory << std::endl;
+	// 	std::cout << std::endl;
+	// }
+
+	// auto options = AdapterOption();
+
+	// // LUID selectedGPU = options.selectGPU(L"Intel(R) UHD Graphics 630");
+	// LUID selectedGPU = options.selectGPU(L"???");
+
+	// std::cout << "!!!!!!" << std::endl;
+	// std::wcout << L"Selected GPU: " << options.target_name << std::endl;
+
+	// SetRenderAdapter(hDevice, selectedGPU);
 
 	GUID guid;
-	if (FAILED(CoCreateGuid(&guid))) {
-		std::cerr << "Failed to create GUID." << std::endl;
-		CloseHandle(hDevice);
-		return 1;
-	}
-
-	char sn[14];
-	wchar_t szGUID[64] = {0};
-	StringFromGUID2(guid, szGUID, 64);
-	snprintf(sn, 13, "%ws", szGUID + 1);
-
-	VIRTUAL_DISPLAY_ADD_OUT output;
-	if (AddVirtualDisplay(hDevice, 3020, 2320, 120, guid, "MyVdisp1", sn, output)) {
-		std::cout << "Virtual display added successfully. Target ID: " << output.TargetId << std::endl;
-		std::wcout << L"GUID: " << szGUID << std::endl;
-		std::cout << "LUID: " << output.AdapterLuid.HighPart << "-" << output.AdapterLuid.LowPart << std::endl;
+	if (s_client_uid && strcmp(s_client_uid, "unknown")) {
+		size_t len = strlen(s_client_uid);
+		if (len > sizeof(GUID)) {
+			len = sizeof(GUID);
+		}
+		memcpy((void*)&guid, (void*)s_client_uid, len);
 	} else {
-		std::cerr << "Failed to add virtual display." << std::endl;
-		return 0;
-	}
-
-	wchar_t deviceName[CCHDEVICENAME];
-	if (GetAddedDisplayName(output, deviceName)) {
-		wprintf(L"Added display name: %ws\n", deviceName);
-	}
-
-	changeDisplaySettings(deviceName, 3020, 2320, 120);
-	setPrimaryDisplay(deviceName);
-
-	system("pause");
-
-	VIRTUAL_DISPLAY_GET_WATCHDOG_OUT watchdogOut;
-	if (GetWatchdogTimeout(hDevice, watchdogOut)) {
-		printf("Watchdog: Timeout %d, Countdown %d\n", watchdogOut.Timeout, watchdogOut.Countdown);
+		guid = DEFAULT_DISPLAY_GUID;
+		s_client_uid = "unknown";
 	}
 
 	if (RemoveVirtualDisplay(hDevice, guid)) {
-		std::cout << "Virtual display removed successfully." << std::endl;
+		printf("Virtual display removed successfully.\n");
+		CloseHandle(hDevice);
+		return 0;
 	} else {
-		std::cerr << "Failed to remove virtual display." << std::endl;
+		printf("Failed to remove virtual display. Creating one instead.\n");
 	}
+
+	VIRTUAL_DISPLAY_ADD_OUT output;
+	if (!AddVirtualDisplay(hDevice, width, height, fps, guid, s_client_name, s_client_uid, output)) {
+		printf("Failed to add virtual display.\n");
+		return 0;
+	}
+
+	// Start watchdog
+
+	// VIRTUAL_DISPLAY_GET_WATCHDOG_OUT watchdogOut;
+	// if (GetWatchdogTimeout(hDevice, watchdogOut)) {
+	// 	printf("Watchdog: Timeout %d, Countdown %d\n", watchdogOut.Timeout, watchdogOut.Countdown);
+	// }
+
+
+	// if (watchdogOut.Timeout) {
+	// 	auto sleepInterval = watchdogOut.Timeout * 1000 / 2;
+	// 	std::thread ping_thread([&hDevice, sleepInterval]{
+	// 		for (;;) {
+	// 			if (!sleepInterval) return;
+	// 			PingDriver(hDevice);
+	// 			Sleep(sleepInterval);
+	// 		}
+	// 	});
+
+	// 	ping_thread.detach();
+	// }
+
+	uint32_t retryInterval = 20;
+	wchar_t deviceName[CCHDEVICENAME];
+	while (!GetAddedDisplayName(output, deviceName)) {
+		Sleep(retryInterval);
+		if (retryInterval > 160) {
+			printf("Cannot get name for newly added virtual display!\n");
+			return 0;
+		}
+		retryInterval *= 2;
+	}
+
+	wprintf(L"Virtual display added successfully: %ws\n", deviceName);
+	printf("Configuration: W: %d, H: %d, FPS: %d\n", width, height, fps);
+	printf("AppID: %s\n", s_app_id);
+
+	changeDisplaySettings(deviceName, width, height, fps);
+	setPrimaryDisplay(deviceName);
+
+	// system("pause");
 
 	CloseHandle(hDevice);
 	return 0;

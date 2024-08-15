@@ -12,6 +12,7 @@
 #include <tlhelp32.h>
 #include "parsec-vdd.h"
 
+#pragma comment(lib, "user32.lib")
 #pragma comment(lib, "advapi32.lib")
 
 using namespace std::chrono_literals;

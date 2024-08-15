@@ -3,6 +3,7 @@
 #include <setupapi.h>
 #include <cfgmgr32.h>
 #include <stdio.h>
+#include <string.h>
 #include "sudovda-ioctl.h"
 
 #ifdef _MSC_VER
@@ -58,32 +59,10 @@ static const HANDLE OpenDevice(const GUID* interfaceGuid) {
 	return handle;
 }
 
-static const bool isProtocolCompatible(const SUVDA_PROTOCAL_VERSION& otherVersion) {
-	// Changes to existing ioctl must be marked as major
-	if (VDAProtocolVersion.Major != otherVersion.Major) {
-		return false;
-	}
-
-	// We shouldn't break compatibility with minor/incremental changes
-	// e.g. add new ioctl
-	if (VDAProtocolVersion.Minor < otherVersion.Minor) {
-		return false;
-	}
-
-	if (
-		VDAProtocolVersion.Minor == otherVersion.Minor &&
-		VDAProtocolVersion.Incremental < otherVersion.Incremental
-	) {
-		return false;
-	}
-
-	return true;
-};
-
-bool AddVirtualDisplay(HANDLE hDevice, UINT Width, UINT Height, UINT RefreshRate, const GUID& MonitorGuid, const CHAR* DeviceName, const CHAR* SerialNumber, VIRTUAL_DISPLAY_ADD_OUT& output) {
-	VIRTUAL_DISPLAY_ADD_PARAMS params{Width, Height, RefreshRate, MonitorGuid};
-	strcpy_s(params.DeviceName, DeviceName);
-	strcpy_s(params.SerialNumber, SerialNumber);
+static const bool AddVirtualDisplay(HANDLE hDevice, UINT Width, UINT Height, UINT RefreshRate, const GUID& MonitorGuid, const CHAR* DeviceName, const CHAR* SerialNumber, VIRTUAL_DISPLAY_ADD_OUT& output) {
+	VIRTUAL_DISPLAY_ADD_PARAMS params{Width, Height, RefreshRate, MonitorGuid, {}, {}};
+	strncpy(params.DeviceName, DeviceName, 13);
+	strncpy(params.SerialNumber, SerialNumber, 13);
 
 	DWORD bytesReturned;
 	BOOL success = DeviceIoControl(
@@ -104,7 +83,7 @@ bool AddVirtualDisplay(HANDLE hDevice, UINT Width, UINT Height, UINT RefreshRate
 	return success;
 }
 
-bool RemoveVirtualDisplay(HANDLE hDevice, const GUID& MonitorGuid) {
+static const bool RemoveVirtualDisplay(HANDLE hDevice, const GUID& MonitorGuid) {
 	VIRTUAL_DISPLAY_REMOVE_PARAMS params{MonitorGuid};
 	DWORD bytesReturned;
 	BOOL success = DeviceIoControl(
@@ -125,7 +104,7 @@ bool RemoveVirtualDisplay(HANDLE hDevice, const GUID& MonitorGuid) {
 	return success;
 }
 
-bool SetRenderAdapter(HANDLE hDevice, const LUID& AdapterLuid) {
+static const bool SetRenderAdapter(HANDLE hDevice, const LUID& AdapterLuid) {
 	VIRTUAL_DISPLAY_SET_RENDER_ADAPTER_PARAMS params{AdapterLuid};
 	DWORD bytesReturned;
 	BOOL success = DeviceIoControl(
@@ -146,7 +125,7 @@ bool SetRenderAdapter(HANDLE hDevice, const LUID& AdapterLuid) {
 	return success;
 }
 
-bool GetWatchdogTimeout(HANDLE hDevice, VIRTUAL_DISPLAY_GET_WATCHDOG_OUT& output) {
+static const bool GetWatchdogTimeout(HANDLE hDevice, VIRTUAL_DISPLAY_GET_WATCHDOG_OUT& output) {
 	DWORD bytesReturned;
 	BOOL success = DeviceIoControl(
 		hDevice,
@@ -166,7 +145,7 @@ bool GetWatchdogTimeout(HANDLE hDevice, VIRTUAL_DISPLAY_GET_WATCHDOG_OUT& output
 	return success;
 }
 
-bool GetProtocolVersion(HANDLE hDevice, VIRTUAL_DISPLAY_GET_PROTOCOL_VERSION_OUT& output) {
+static const bool GetProtocolVersion(HANDLE hDevice, VIRTUAL_DISPLAY_GET_PROTOCOL_VERSION_OUT& output) {
 	DWORD bytesReturned;
 	BOOL success = DeviceIoControl(
 		hDevice,
@@ -186,7 +165,32 @@ bool GetProtocolVersion(HANDLE hDevice, VIRTUAL_DISPLAY_GET_PROTOCOL_VERSION_OUT
 	return success;
 }
 
-bool PingDriver(HANDLE hDevice) {
+static const bool isProtocolCompatible(const SUVDA_PROTOCAL_VERSION& otherVersion) {
+	// Changes to existing ioctl must be marked as major
+	if (VDAProtocolVersion.Major != otherVersion.Major) {
+		return false;
+	}
+
+	// We shouldn't break compatibility with minor/incremental changes
+	// e.g. add new ioctl in the driver
+	// But if our minor version is newer than the driver version, break
+	if (VDAProtocolVersion.Minor > otherVersion.Minor) {
+		return false;
+	}
+
+	return true;
+};
+
+static const bool CheckProtocolCompatible(HANDLE hDevice) {
+	VIRTUAL_DISPLAY_GET_PROTOCOL_VERSION_OUT protocolVersion;
+	if (GetProtocolVersion(hDevice, protocolVersion)) {
+		return isProtocolCompatible(protocolVersion.Version);
+	}
+
+	return false;
+}
+
+static const bool PingDriver(HANDLE hDevice) {
 	DWORD bytesReturned;
 	BOOL success = DeviceIoControl(
 		hDevice,
@@ -206,7 +210,7 @@ bool PingDriver(HANDLE hDevice) {
 	return success;
 }
 
-bool GetAddedDisplayName(const VIRTUAL_DISPLAY_ADD_OUT& addedDisplay, wchar_t* deviceName) {
+static const bool GetAddedDisplayName(const VIRTUAL_DISPLAY_ADD_OUT& addedDisplay, wchar_t* deviceName) {
 	// get all paths
 	UINT pathCount;
 	UINT modeCount;
