@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+#include <iostream>
 #include <setupapi.h>
 #include <cfgmgr32.h>
 #include <stdio.h>

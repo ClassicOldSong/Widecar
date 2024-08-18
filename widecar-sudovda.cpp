@@ -1,10 +1,11 @@
 #include <windows.h>
 #include <iostream>
 #include <vector>
+#include <thread>
+#include <algorithm>
 #include <setupapi.h>
 #include <initguid.h>
 #include <combaseapi.h>
-#include <thread>
 #include "sudovda.h"
 // #include "AdapterOption.h"
 
