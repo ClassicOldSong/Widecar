@@ -4,6 +4,11 @@ Widecar is a tiny helper designed to enhance your streaming experience with Suns
 
 `Widecar` is basically `Sidecar for Windows`, it is especially useful when you have an Android tablet with high refresh rate and a stylus. If you connect a keyboard and mouse to the tablet, it's no different from a Windows tablet but with much powerful CPU/GPU power when streaming.
 
+> [!WARNING]
+> ## This project is sunsetting as [Apollo](https://github.com/ClassicOldSong/Apollo) is in development.
+> You can find a preview release of Apollo [here](https://github.com/ClassicOldSong/Apollo/releases/tag/apollo-0.0.0-preview).
+> Apollo works best in conjunction with [Artemis](https://github.com/ClassicOldSong/moonlight-android), providing loads of optimizations and feature improvements.
+
 ## Features
 
 1. **Automatically create a new virtual screen on connect**: When you start streaming, Widecar will automatically create a new virtual display.
@@ -128,7 +133,7 @@ I got kicked from Moonlight and Sunshine's Discord server and banned from Sunshi
 
 This is what I got for finding a bug, opened an issue, getting no response, troubleshoot myself, fixed the issue myself, shared it by PR to the main repo hoping my efforts can help someone else during the maintainance gap.
 
-Yes, I'm going away. I have started [a fork of Sunshine called Apollo](https://github.com/ClassicOldSong/Apollo) and will add useful features that will never get merged by the main repo shortly. [Apollo](https://github.com/ClassicOldSong/Apollo) and [Moonlight Noir](https://github.com/ClassicOldSong/moonlight-android) will no longer be compatible with OG Sunshine and OG Moonlight eventually, but they'll work even better with much more carefully designed features.
+Yes, I'm going away. I have started [a fork of Sunshine called Apollo](https://github.com/ClassicOldSong/Apollo) and will add useful features that will never get merged by the main repo shortly. [Apollo](https://github.com/ClassicOldSong/Apollo) and [Artemis](https://github.com/ClassicOldSong/moonlight-android) will no longer be compatible with OG Sunshine and OG Moonlight eventually, but they'll work even better with much more carefully designed features.
 
 The Moonlight repo had stayed silent for 5 months, with nobody actually responding to issues, and people are getting totally no help besides the limited FAQ in their Discord server. I tried to answer issues and questions, solve problems within my ablilty but I got kicked out just for helping others. The funniest thing is, the repo starts updating after they got me banned!
 
