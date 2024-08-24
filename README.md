@@ -6,7 +6,7 @@ Widecar is a tiny helper designed to enhance your streaming experience with Suns
 
 > [!WARNING]
 > ## This project is sunsetting as [Apollo](https://github.com/ClassicOldSong/Apollo) is in development.
-> You can find a preview release of Apollo [here](https://github.com/ClassicOldSong/Apollo/releases/tag/apollo-0.0.0-preview).
+> You can find a preview release of Apollo [here](https://github.com/ClassicOldSong/Apollo/releases).
 > Apollo works best in conjunction with [Artemis](https://github.com/ClassicOldSong/moonlight-android), providing loads of optimizations and feature improvements.
 
 ## Features
